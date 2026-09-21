@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Campo Infinito de Girasoles</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    background: #62b83d;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    display: block;
+}
+
+/* PANEL */
+
+#info {
+
+    position: fixed;
+
+    top: 15px;
+    left: 15px;
+
+    background: rgba(30, 30, 20, 0.75);
+
+    color: white;
+
+    padding: 12px 18px;
+
+    border-radius: 10px;
+
+    z-index: 20;
+
+}
+
+#info h2 {
+
+    color: #ffd21c;
+
+    margin-bottom: 5px;
+
+}
+
+#info p {
+
+    font-size: 14px;
+
+}
+
+
+/* CONTROLES */
+
+#controles {
+
+    position: fixed;
+
+    right: 20px;
+    bottom: 20px;
+
+    background: rgba(30,30,20,0.75);
+
+    color: white;
+
+    padding: 12px 18px;
+
+    border-radius: 10px;
+
+    z-index: 20;
+
+    line-height: 25px;
+
+}
+
+.tecla {
+
+    background: #333;
+
+    border: 1px solid #aaa;
+
+    padding: 2px 7px;
+
+    border-radius: 5px;
+
+    font-weight: bold;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div id="info">
+
+<h2>🌻 Campo Infinito</h2>
+
+<p>Girasoles: <span id="contador">0</span></p>
+
+<p>Sigue caminando...</p>
+
+</div>
+
+
+<div id="controles">
+
+<span class="tecla">W</span> Adelante<br>
+
+<span class="tecla">A</span> Izquierda<br>
+
+<span class="tecla">S</span> Atrás<br>
+
+<span class="tecla">D</span> Derecha
+
+</div>
+
+
+<canvas id="juego"></canvas>
+
+
+<script>
+
+
+// =====================================================
+// CANVAS
+// =====================================================
+
+const canvas =
+document.getElementById("juego");
+
+const ctx =
+canvas.getContext("2d");
+
+
+function ajustarPantalla() {
+
+    canvas.width =
+    window.innerWidth;
+
+    canvas.height =
+    window.innerHeight;
+
+}
+
+ajustarPantalla();
+
+
+// =====================================================
+// PERSONAJE
+// =====================================================
+
+const jugador = {
+
+    x: 0,
+
+    y: 0,
+
+    velocidad: 4
+
+};
+
+
+// =====================================================
+// TECLAS
+// =====================================================
+
+const teclas = {};
+
+
+document.addEventListener(
+    "keydown",
+    function(e) {
+
+        teclas[e.key.toLowerCase()] = true;
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    function(e) {
+
+        teclas[e.key.toLowerCase()] = false;
+
+    }
+);
+
+
+// =====================================================
+// CAMPO
+// =====================================================
+
+const tamañoCelda = 150;
+
+let girasoles = [];
+
+
+// =====================================================
+// ALEATORIO
+// =====================================================
+
+function aleatorio(x, y, extra = 0) {
+
+    let numero =
+        Math.sin(
+            x * 127.1 +
+            y * 311.7 +
+            extra * 91.3
+        ) * 43758.5453;
+
+    return numero -
+           Math.floor(numero);
+
+}
+
+
+// =====================================================
+// GENERAR CAMPO INFINITO
+// =====================================================
+
+function generarCampo() {
+
+    girasoles = [];
+
+
+    const centroX =
+        Math.floor(
+            jugador.x /
+            tamañoCelda
+        );
+
+
+    const centroY =
+        Math.floor(
+            jugador.y /
+            tamañoCelda
+        );
+
+
+    for (
+        let x = centroX - 10;
+        x <= centroX + 10;
+        x++
+    ) {
+
+        for (
+            let y = centroY - 7;
+            y <= centroY + 7;
+            y++
+        ) {
+
+
+            // Separación entre girasoles
+
+            if (
+                aleatorio(x,y,1)
+                > 0.30
+            ) {
+
+
+                let posicionX =
+
+                    x * tamañoCelda +
+
+                    (
+                        aleatorio(
+                            x,
+                            y,
+                            2
+                        ) - 0.5
+                    ) * 100;
+
+
+                let posicionY =
+
+                    y * tamañoCelda +
+
+                    (
+                        aleatorio(
+                            x,
+                            y,
+                            3
+                        ) - 0.5
+                    ) * 100;
+
+
+                let escala =
+
+                    0.55 +
+
+                    aleatorio(
+                        x,
+                        y,
+                        4
+                    ) * 0.55;
+
+
+                girasoles.push({
+
+                    x: posicionX,
+
+                    y: posicionY,
+
+                    escala: escala,
+
+                    rotacion:
+                    (
+                        aleatorio(
+                            x,
+                            y,
+                            5
+                        ) - 0.5
+                    ) * 0.15
+
+                });
+
+            }
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// ACTUALIZAR PERSONAJE
+// =====================================================
+
+function actualizar() {
+
+
+    if (teclas["w"]) {
+
+        jugador.y -=
+        jugador.velocidad;
+
+    }
+
+
+    if (teclas["s"]) {
+
+        jugador.y +=
+        jugador.velocidad;
+
+    }
+
+
+    if (teclas["a"]) {
+
+        jugador.x -=
+        jugador.velocidad;
+
+    }
+
+
+    if (teclas["d"]) {
+
+        jugador.x +=
+        jugador.velocidad;
+
+    }
+
+
+    generarCampo();
+
+}
+
+
+// =====================================================
+// HOJA
+// =====================================================
+
+function dibujarHoja(
+    x,
+    y,
+    escala,
+    rotacion
+) {
+
+    ctx.save();
+
+
+    ctx.translate(
+        x,
+        y
+    );
+
+
+    ctx.rotate(
+        rotacion
+    );
+
+
+    ctx.scale(
+        escala,
+        escala
+    );
+
+
+    ctx.fillStyle =
+    "#31852c";
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(0,0);
+
+
+    ctx.bezierCurveTo(
+
+        -15,
+        -15,
+
+        -40,
+        -8,
+
+        -45,
+        5
+
+    );
+
+
+    ctx.bezierCurveTo(
+
+        -30,
+        17,
+
+        -10,
+        12,
+
+        0,
+        0
+
+    );
+
+
+    ctx.fill();
+
+
+    // Nervadura
+
+    ctx.strokeStyle =
+    "#68a94a";
+
+    ctx.lineWidth = 2;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        0
+    );
+
+    ctx.lineTo(
+        -34,
+        4
+    );
+
+    ctx.stroke();
+
+
+    ctx.restore();
+
+}
+
+
+// =====================================================
+// GIRASOL
+// =====================================================
+
+function dibujarGirasol(
+    x,
+    y,
+    escala,
+    rotacion
+) {
+
+    ctx.save();
+
+
+    ctx.translate(
+        x,
+        y
+    );
+
+
+    ctx.rotate(
+        rotacion
+    );
+
+
+    ctx.scale(
+        escala,
+        escala
+    );
+
+
+    // =========================
+    // SOMBRA
+    // =========================
+
+    ctx.fillStyle =
+    "rgba(30,80,20,0.25)";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+
+        8,
+        65,
+
+        32,
+        9,
+
+        0,
+
+        0,
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    // =========================
+    // TALLO
+    // =========================
+
+    ctx.strokeStyle =
+    "#347b2e";
+
+    ctx.lineWidth = 7;
+
+    ctx.lineCap = "round";
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+        0,
+        15
+    );
+
+
+    ctx.lineTo(
+        0,
+        70
+    );
+
+
+    ctx.stroke();
+
+
+    // =========================
+    // HOJAS
+    // =========================
+
+    dibujarHoja(
+        -2,
+        38,
+        0.9,
+        -0.5
+    );
+
+
+    dibujarHoja(
+        3,
+        52,
+        0.8,
+        0.5
+    );
+
+
+    // =================================================
+    // PÉTALOS
+    // =================================================
+
+    const cantidadPetalos = 24;
+
+
+    for (
+        let i = 0;
+        i < cantidadPetalos;
+        i++
+    ) {
+
+
+        let angulo =
+
+        i *
+        Math.PI *
+        2 /
+        cantidadPetalos;
+
+
+        ctx.save();
+
+
+        ctx.rotate(
+            angulo
+        );
+
+
+        // Color del pétalo
+
+        ctx.fillStyle =
+        i % 2 === 0
+        ? "#ffc928"
+        : "#f5b915";
+
+
+        ctx.beginPath();
+
+
+        // Forma puntiaguda
+
+        ctx.moveTo(
+            -7,
+            -9
+        );
+
+
+        ctx.quadraticCurveTo(
+
+            -11,
+            -30,
+
+            0,
+            -48
+
+        );
+
+
+        ctx.quadraticCurveTo(
+
+            11,
+            -30,
+
+            7,
+            -9
+
+        );
+
+
+        ctx.closePath();
+
+
+        ctx.fill();
+
+
+        ctx.restore();
+
+    }
+
+
+    // =================================================
+    // CENTRO
+    // =================================================
+
+    let centro =
+
+    ctx.createRadialGradient(
+
+        0,
+        0,
+        2,
+
+        0,
+        0,
+        25
+
+    );
+
+
+    centro.addColorStop(
+        0,
+        "#5b2509"
+    );
+
+
+    centro.addColorStop(
+        0.7,
+        "#7b360c"
+    );
+
+
+    centro.addColorStop(
+        1,
+        "#421805"
+    );
+
+
+    ctx.fillStyle =
+    centro;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        0,
+        0,
+        25,
+
+        0,
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    // =================================================
+    // SEMILLAS
+    // =================================================
+
+    for (
+        let i = 0;
+        i < 90;
+        i++
+    ) {
+
+
+        const angulo =
+        i * 2.4;
+
+
+        const radio =
+        Math.sqrt(i) * 2.3;
+
+
+        const semillaX =
+        Math.cos(angulo)
+        * radio;
+
+
+        const semillaY =
+        Math.sin(angulo)
+        * radio;
+
+
+        ctx.fillStyle =
+        i % 2 === 0
+        ? "#321105"
+        : "#5b270b";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            semillaX,
+            semillaY,
+
+            1.4,
+
+            0,
+            Math.PI * 2
+
+        );
+
+
+        ctx.fill();
+
+    }
+
+
+    ctx.restore();
+
+}
+
+
+// =====================================================
+// MUJER
+// =====================================================
+
+function dibujarMujer() {
+
+
+    const x =
+    canvas.width / 2;
+
+
+    const y =
+    canvas.height / 2;
+
+
+    ctx.save();
+
+
+    // =========================
+    // SOMBRA
+    // =========================
+
+    ctx.fillStyle =
+    "rgba(0,0,0,0.30)";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+
+        x,
+        y + 48,
+
+        22,
+        7,
+
+        0,
+
+        0,
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    // =========================
+    // PIERNAS
+    // =========================
+
+    ctx.fillStyle =
+    "#252525";
+
+
+    ctx.fillRect(
+
+        x - 11,
+        y + 18,
+
+        9,
+        30
+
+    );
+
+
+    ctx.fillRect(
+
+        x + 2,
+        y + 18,
+
+        9,
+        30
+
+    );
+
+
+    // =========================
+    // ZAPATOS
+    // =========================
+
+    ctx.fillStyle =
+    "#111";
+
+
+    ctx.fillRect(
+
+        x - 14,
+        y + 45,
+
+        14,
+        6
+
+    );
+
+
+    ctx.fillRect(
+
+        x + 2,
+        y + 45,
+
+        14,
+        6
+
+    );
+
+
+    // =========================
+    // CUERPO
+    // =========================
+
+    ctx.fillStyle =
+    "#343c28";
+
+
+    ctx.beginPath();
+
+
+    ctx.roundRect(
+
+        x - 14,
+        y - 20,
+
+        28,
+        40,
+
+        6
+
+    );
+
+
+    ctx.fill();
+
+
+    // =========================
+    // BRAZOS
+    // =========================
+
+    ctx.strokeStyle =
+    "#c98a67";
+
+    ctx.lineWidth = 7;
+
+    ctx.lineCap =
+    "round";
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+
+        x - 13,
+        y - 10
+
+    );
+
+
+    ctx.lineTo(
+
+        x - 20,
+        y + 15
+
+    );
+
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+
+        x + 13,
+        y - 10
+
+    );
+
+
+    ctx.lineTo(
+
+        x + 20,
+        y + 15
+
+    );
+
+
+    ctx.stroke();
+
+
+    // =========================
+    // CUELLO
+    // =========================
+
+    ctx.fillStyle =
+    "#c98a67";
+
+
+    ctx.fillRect(
+
+        x - 5,
+        y - 31,
+
+        10,
+        12
+
+    );
+
+
+    // =========================
+    // CABELLO
+    // =========================
+
+    ctx.fillStyle =
+    "#321b13";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+
+        x,
+        y - 42,
+
+        18,
+        23,
+
+        0,
+
+        0,
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    // =========================
+    // CARA
+    // =========================
+
+    ctx.fillStyle =
+    "#c98a67";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+
+        x,
+        y - 41,
+
+        10,
+        13,
+
+        0,
+
+        0,
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    // =========================
+    // CABELLO ENCIMA
+    // =========================
+
+    ctx.fillStyle =
+    "#321b13";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+
+        x,
+        y - 47,
+
+        17,
+
+        Math.PI,
+        Math.PI * 2
+
+    );
+
+
+    ctx.fill();
+
+
+    // Cabello largo
+
+    ctx.fillRect(
+
+        x - 17,
+        y - 45,
+
+        7,
+        30
+
+    );
+
+
+    ctx.fillRect(
+
+        x + 10,
+        y - 45,
+
+        7,
+        30
+
+    );
+
+
+    ctx.restore();
+
+}
+
+
+// =====================================================
+// DIBUJAR
+// =====================================================
+
+function dibujar() {
+
+
+    ctx.clearRect(
+
+        0,
+        0,
+
+        canvas.width,
+        canvas.height
+
+    );
+
+
+    // =========================
+    // CAMPO
+    // =========================
+
+    const fondo =
+
+    ctx.createLinearGradient(
+
+        0,
+        0,
+
+        0,
+        canvas.height
+
+    );
+
+
+    fondo.addColorStop(
+        0,
+        "#82c94c"
+    );
+
+
+    fondo.addColorStop(
+        1,
+        "#55a936"
+    );
+
+
+    ctx.fillStyle =
+    fondo;
+
+
+    ctx.fillRect(
+
+        0,
+        0,
+
+        canvas.width,
+        canvas.height
+
+    );
+
+
+    // =========================
+    // GIRASOLES
+    // =========================
+
+    for (
+        const g of girasoles
+    ) {
+
+
+        const pantallaX =
+
+        g.x -
+        jugador.x +
+        canvas.width / 2;
+
+
+        const pantallaY =
+
+        g.y -
+        jugador.y +
+        canvas.height / 2;
+
+
+        if (
+
+            pantallaX > -100 &&
+            pantallaX < canvas.width + 100 &&
+
+            pantallaY > -120 &&
+            pantallaY < canvas.height + 120
+
+        ) {
+
+
+            dibujarGirasol(
+
+                pantallaX,
+                pantallaY,
+
+                g.escala,
+                g.rotacion
+
+            );
+
+        }
+
+    }
+
+
+    // =========================
+    // MUJER
+    // =========================
+
+    dibujarMujer();
+
+
+    // =========================
+    // CONTADOR
+    // =========================
+
+    document.getElementById(
+        "contador"
+    ).textContent =
+
+    Math.floor(
+
+        Math.sqrt(
+
+            jugador.x *
+            jugador.x +
+
+            jugador.y *
+            jugador.y
+
+        ) / 10
+
+    );
+
+}
+
+
+// =====================================================
+// BUCLE
+// =====================================================
+
+function juego() {
+
+    actualizar();
+
+    dibujar();
+
+    requestAnimationFrame(
+        juego
+    );
+
+}
+
+
+generarCampo();
+
+juego();
+
+
+// =====================================================
+// REDIMENSIONAR
+// =====================================================
+
+window.addEventListener(
+    "resize",
+    ajustarPantalla
+);
+
+</script>
+
+</body>
+</html>
